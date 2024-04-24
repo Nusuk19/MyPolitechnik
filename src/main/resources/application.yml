@@ -1,3 +1,19 @@
 bot:
     token: 7171230298:AAHQIcbZTQ8gpJBoab6SHImD4KdWINlM8aQ
     username: mypolytechnic_bot
+
+spring:
+    jpa:
+        hibernate:
+            ddl-auto: update
+        database-platform: org.hibernate.dialect.MySQL8Dialect
+        show-sql: true
+    datasource:
+        url: jdbc:mysql://localhost:3306/tg-bot
+        username: root
+        password: 1324576809Aa
+        driver-class-name: com.mysql.cj.jdbc.Driver
+
+#db related settings
+cron:
+    scheduler: 0 0 * * SUN
