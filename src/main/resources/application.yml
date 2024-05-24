@@ -16,4 +16,4 @@ spring:
 
 #db related settings
 cron:
-    scheduler: 0 0 * * SUN
+    scheduler: 0 9 * * * 5
