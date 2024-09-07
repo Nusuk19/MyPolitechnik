@@ -50,7 +50,7 @@ public class MyTelegramBot extends TelegramLongPollingBot {
     private final String botToken;
     private ScheduleManager scheduleManager;
 
-    static final String HELP_TEXT = "Цей бот створений для студентів НУЛП (Дописати)";
+    static final String HELP_TEXT = "Цей бот створений для студентів Національного університету \"Львівська політехніка\". Він допомагає студентам в управлінні їхнім навчальним процесом, надаючи можливість переглядати розклад занять, додавати та переглядати завдання, додавати файли для збереження (наприклад лабораторні роботи), а також отримувати різноманітні нагадування, відстежувати свою успішність та заборгованість, переглядати пріоритетність завдань";
     static final String ERROR_TEXT = "Error occurred: ";
 
     public MyTelegramBot(@Value("${bot.username}") String botUsername, @Value("${bot.token}") String botToken) {
@@ -126,8 +126,8 @@ public class MyTelegramBot extends TelegramLongPollingBot {
                     case "Терміни здачі":
                         listTaskTopicsAndDeadlines(chatId);
                         break;
-                    case "Додати файл":
-                        sendTextMessage(chatId, "Щоб завантажити файл, надішліть його боту. Після цього введіть назву предмету, до якого відноситься цей файл.");
+                    case "Видалити файл":
+                        sendTextMessage(chatId, "Будь ласка, введіть ID файла, який ви хочете видалити, як команду (/delfile <ID завдання>):");
                         break;
                     case "/myfiles":
                         listUserFiles(chatId);
@@ -162,7 +162,7 @@ public class MyTelegramBot extends TelegramLongPollingBot {
                         sendCustomKeyboard(chatId, scheduleButtons3);
                         break;
                     case "Завдання":
-                        List<String> scheduleButtons4 = Arrays.asList("Мої завдання", "Додати завдання", "Завершити завдання", "Змінити завдання","Додати файл", "Назад");
+                        List<String> scheduleButtons4 = Arrays.asList("Мої завдання", "Додати завдання", "Завершити завдання", "Змінити завдання","Видалити файл", "Назад");
                         sendCustomKeyboard(chatId, scheduleButtons4);
                         break;
                     case "Про чат-бот":
@@ -177,6 +177,10 @@ public class MyTelegramBot extends TelegramLongPollingBot {
             if (update.getMessage().hasText() && messageText.contains("|")) {
                 addTaskFromInput(chatId, messageText);
             }
+            if (messageText.startsWith("/delfile")) {
+                long fileId = Long.parseLong(messageText.substring("/delfile ".length()).trim());
+                deleteFile(chatId, fileId);
+            }
             if (messageText.startsWith("/del")) {
                 long taskId = Long.parseLong(messageText.substring("/del ".length()).trim());
                 deleteTask(chatId, taskId);
@@ -186,6 +190,7 @@ public class MyTelegramBot extends TelegramLongPollingBot {
                 long taskId = Long.parseLong(messageText.substring("/com ".length()).trim());
                 markTaskAsCompleted(chatId, taskId);
             }
+
 
         }
         if (update.hasMessage() && update.getMessage().hasDocument()) {
@@ -203,9 +208,19 @@ public class MyTelegramBot extends TelegramLongPollingBot {
                 "   - Надішліть файл боту.\n" +
                 "2. Після завантаження файлу бот запитає вас про назву предмету. Введіть назву предмету у відповідь.\n" +
                 "3. Щоб переглянути усі завантажені вами файли, використовуйте команду /myfiles.\n" +
-                "4. Ви також можете переглянути свої завдання та інші функції за допомогою відповідних команд.";
+                "4. Ви також можете переглянути свої завдання та інші функції за допомогою відповідних команд та кнопок.";
 
         sendTextMessage(chatId, instructions);
+    }
+
+    private void deleteFile(long chatId, Long fileId) {
+        Optional<UserFile> optionalUserFile = userFileRepository.findById(fileId);
+        if (optionalUserFile.isPresent()) {
+            userFileRepository.deleteById(fileId);
+            sendTextMessage(chatId, "Файл успішно видалено.");
+        } else {
+            sendTextMessage(chatId, "Файл з вказаним номером не знайдено.");
+        }
     }
 
     private void handleDocumentUpload(Message message) {
@@ -238,7 +253,7 @@ public class MyTelegramBot extends TelegramLongPollingBot {
                 SendDocument sendDocument = new SendDocument();
                 sendDocument.setChatId(String.valueOf(chatId));
                 sendDocument.setDocument(new InputFile(userFile.getFileId()));
-                sendDocument.setCaption("Предмет: " + userFile.getSubject() + "\nФайл: " + userFile.getFileName());
+                sendDocument.setCaption("Предмет: " + userFile.getSubject() + "\nФайл: " + userFile.getFileName()+"\nID: " + userFile.getId());
 
                 try {
                     execute(sendDocument);

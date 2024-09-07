@@ -61,8 +61,12 @@ public class ScheduleManager {
         String[] lessons = scheduleMap.get(today);
         if (lessons != null) {
             StringBuilder schedule = new StringBuilder("Розклад на сьогодні (").append(today.toString()).append("):\n");
-            for (int i = 0; i < lessons.length; i++) {
-                schedule.append("Урок ").append(i + 1).append(": ").append(lessons[i]).append("\n");
+            int lessonNumber = 1;
+            for (String lesson : lessons) {
+                if (lesson != null && !lesson.trim().isEmpty()) {
+                    schedule.append("Урок ").append(lessonNumber).append(": ").append(lesson).append("\n");
+                }
+                lessonNumber++;
             }
             return schedule.toString();
         } else {
